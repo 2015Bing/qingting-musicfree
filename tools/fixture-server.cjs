@@ -1,0 +1,18 @@
+// Deterministic, local-only integration fixtures; not a music subscription service.
+const http=require('node:http');
+const port=18765;const base=`http://127.0.0.1:${port}`;
+const wav=Buffer.alloc(44+22050*2*90);wav.write('RIFF');wav.writeUInt32LE(wav.length-8,4);wav.write('WAVEfmt ',8);wav.writeUInt32LE(16,16);wav.writeUInt16LE(1,20);wav.writeUInt16LE(1,22);wav.writeUInt32LE(22050,24);wav.writeUInt32LE(44100,28);wav.writeUInt16LE(2,32);wav.writeUInt16LE(16,34);wav.write('data',36);wav.writeUInt32LE(wav.length-44,40);
+for(let i=0;i<(wav.length-44)/2;i++)wav.writeInt16LE(Math.round(Math.sin(i*2*Math.PI*220/22050)*1200),44+i*2);
+function plugin(name,mode){
+  if(mode==='lyrics')return `module.exports={platform:'测试 · 歌词源',version:'1.0.0',supportedSearchType:['lyric'],async search(){return {isEnd:true,data:[{id:'lyric-1',title:'晨间微风',artist:'轻听测试'}]};},async getLyric(item){if(item.id!=='lyric-1')throw new Error('must use lyric search id');return {rawLrc:'[00:00.00]专用歌词源补全\\n[00:02.00]同步第二句'};}};`;
+  const charts=mode==='primary'?`async getTopLists(){return [{title:'测试榜单',data:[{id:'hot',title:'热门榜',token:'chart-token'},{id:'new',title:'新歌榜',token:'chart-token'}]}];},async getTopListDetail(board,page){if(board.token!=='chart-token')throw new Error('lost board metadata');const result=(await axios.get('${base}/search',{params:{page}})).data;return {isEnd:result.isEnd,musicList:result.data.map(song=>({...song,chartToken:board.token}))};},`:'';
+  return `const axios=require('axios');module.exports={${charts}platform:${JSON.stringify(name)},version:'1.0.0',userVariables:[{key:'token',name:'测试配置',type:'text'}],async search(q,page,type){${mode==='broken'?`throw new Error('测试源暂时不可用');`:`return (await axios.get('${base}/search',{params:{q,page,mode:'${mode}'}})).data;`}},async getMediaSource(song,quality){return {url:'${base}/'+((${JSON.stringify(mode)}==='primary'||song.fixturePlayable)&&quality==='low'?'tone.wav':'invalid'),headers:{'X-Fixture':'true'},rawLrc:${JSON.stringify(mode)}==='primary'?'[00:00.00]音源自带歌词\\n[00:02.00]同步第二句':''};}};`;
+}
+http.createServer((req,res)=>{
+  const u=new URL(req.url,base);console.log(req.method,u.pathname);
+  if(u.pathname==='/plugins.json'){res.setHeader('Content-Type','application/json');return res.end(JSON.stringify({plugins:[{name:'测试 · 主线路',url:base+'/primary.js'},{name:'测试 · 备用线路',url:base+'/fallback.js'},{name:'测试 · 故障源',url:base+'/broken.js'},{name:'测试 · 歌词源',url:base+'/lyrics.js'}]}));}
+  if(u.pathname.endsWith('.js')){res.setHeader('Content-Type','application/javascript');const type=u.pathname.slice(1,-3);return res.end(plugin({'primary':'测试 · 主线路','fallback':'测试 · 备用线路','broken':'测试 · 故障源','lyrics':'测试 · 歌词源'}[type],type));}
+  if(u.pathname==='/search'){res.setHeader('Content-Type','application/json');const page=Number(u.searchParams.get('page'));return res.end(JSON.stringify({isEnd:page>=2,data:(page===1?['晨间微风','晴天散步','傍晚回家']:['晨间微风 (Live)']).map((title,i)=>({id:page*10+i,title,artist:'轻听测试',album:'功能验收',duration:90,fixtureExtra:'preserved'}))}));}
+  if(u.pathname==='/tone.wav'){res.setHeader('Content-Type','audio/wav');res.setHeader('Accept-Ranges','bytes');const match=/bytes=(\d+)-(\d*)/.exec(req.headers.range||'');if(match){const start=Number(match[1]),end=Math.min(Number(match[2]||wav.length-1),wav.length-1);res.statusCode=206;res.setHeader('Content-Range',`bytes ${start}-${end}/${wav.length}`);res.setHeader('Content-Length',end-start+1);return res.end(wav.subarray(start,end+1));}res.setHeader('Content-Length',wav.length);return res.end(wav);}
+  res.statusCode=503;res.end('fixture unavailable');
+}).listen(port,'127.0.0.1',()=>console.log(`Fixture ready: ${base}/plugins.json`));

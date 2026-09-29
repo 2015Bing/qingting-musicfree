@@ -1,0 +1,48 @@
+plugins { id 'com.android.application' }
+def releaseKeys = new Properties()
+def releaseKeysFile = rootProject.file('signing/release.properties')
+if (releaseKeysFile.exists()) releaseKeysFile.withInputStream { releaseKeys.load(it) }
+android {
+    namespace 'app.qingting.music'
+    compileSdk 36
+    defaultConfig {
+        applicationId 'app.qingting.music'
+        minSdk 26
+        targetSdk 35
+        versionCode 28
+        versionName '0.4.1'
+        buildConfigField 'String', 'LICENSE_URL', '""'
+        testInstrumentationRunner 'androidx.test.runner.AndroidJUnitRunner'
+    }
+    signingConfigs {
+        release {
+            if (releaseKeysFile.exists()) {
+                storeFile rootProject.file(releaseKeys.getProperty('storeFile'))
+                storePassword releaseKeys.getProperty('storePassword')
+                keyAlias releaseKeys.getProperty('keyAlias')
+                keyPassword releaseKeys.getProperty('keyPassword')
+            }
+        }
+    }
+    buildTypes {
+        release {
+            debuggable false
+            signingConfig signingConfigs.release
+        }
+    }
+    compileOptions { sourceCompatibility JavaVersion.VERSION_17; targetCompatibility JavaVersion.VERSION_17 }
+    buildFeatures { buildConfig true }
+    lint { abortOnError true }
+}
+dependencies {
+    implementation 'androidx.annotation:annotation-jvm:1.9.1'
+    implementation 'androidx.media3:media3-exoplayer:1.8.0'
+    implementation 'androidx.media3:media3-exoplayer-hls:1.8.0'
+    implementation 'androidx.media3:media3-session:1.8.0'
+    implementation 'com.squareup.okhttp3:okhttp:4.12.0'
+    testImplementation 'junit:junit:4.13.2'
+    testImplementation 'org.json:json:20240303'
+    testImplementation 'com.squareup.okhttp3:mockwebserver:4.12.0'
+    androidTestImplementation 'androidx.test:runner:1.6.2'
+    androidTestImplementation 'androidx.test.ext:junit:1.2.1'
+}

@@ -1,0 +1,3 @@
+# Copy to licensing.properties after uploading the generated whitelist to OSS.
+# Only a public/read-only HTTPS file URL; never put OSS AccessKey credentials here.
+url=

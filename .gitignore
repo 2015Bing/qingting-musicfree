@@ -1,0 +1,25 @@
+.gradle/
+**/build/
+local.properties
+node_modules/
+.tools/
+*.log
+signing/
+licensing.properties
+licensing-private/
+dist/
+docs/superpowers/
+docs/verification.md
+*.jks
+*.keystore
+*.p12
+*.pem
+*.key
+.env
+.env.*
+!*.example
+
+# Local marketing materials and historical operational notes
+assets/marketing/
+docs/activation.md
+docs/subscription-diagnostic.md

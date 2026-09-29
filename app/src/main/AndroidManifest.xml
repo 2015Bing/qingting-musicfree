@@ -1,0 +1,21 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <application android:name=".MusicApp" android:label="轻听" android:theme="@style/AppTheme"
+        android:icon="@mipmap/ic_launcher" android:roundIcon="@mipmap/ic_launcher" android:allowBackup="false" android:supportsRtl="true"
+        android:usesCleartextTraffic="true">
+        <activity android:name=".MainActivity" android:exported="true" android:enableOnBackInvokedCallback="false" android:windowSoftInputMode="adjustResize">
+            <intent-filter><action android:name="android.intent.action.MAIN" /><category android:name="android.intent.category.LAUNCHER" /></intent-filter>
+        </activity>
+        <activity android:name=".PlayerActivity" android:theme="@style/PlayerTheme" android:exported="false" android:launchMode="singleTop" android:parentActivityName=".MainActivity" />
+        <activity android:name=".HelpActivity" android:exported="false" android:parentActivityName=".MainActivity" />
+        <service android:name=".PlaybackService" android:foregroundServiceType="mediaPlayback" android:exported="false">
+            <intent-filter><action android:name="androidx.media3.session.MediaSessionService" /></intent-filter>
+        </service>
+        <service android:name=".DailyChartJob" android:permission="android.permission.BIND_JOB_SERVICE" android:exported="false" />
+    </application>
+</manifest>

@@ -1,0 +1,13 @@
+{
+  "name": "qingting-plugin-runtime",
+  "private": true,
+  "scripts": {
+    "bundle": "esbuild runtime/entry.cjs --bundle --platform=browser --outfile=app/src/main/assets/runtime.js",
+    "test": "node --test tests/runtime.test.cjs"
+  },
+  "dependencies": {
+    "axios": "0.27.2", "crypto-js": "4.2.0", "dayjs": "1.11.13",
+    "big-integer": "1.6.52", "qs": "6.14.0", "he": "1.2.0", "cheerio": "1.0.0-rc.12"
+  },
+  "devDependencies": { "esbuild": "0.25.9" }
+}
