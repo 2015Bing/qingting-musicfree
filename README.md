@@ -23,7 +23,7 @@
 
 **轻听是一款以“找到歌、听得顺、收藏来源不乱”为目标的原生 Android 音乐播放器。**
 
-它把多个 MusicFree 插件来源的搜索、排行榜和播放集中在一个应用里，同时提供收藏、自建歌单、当前播放队列和同步歌词。你可以从榜单发现歌曲，也可以搜索后查看可选来源；喜欢的版本连同播放来源一起保存，下次从收藏直接听。
+它把多个 MusicFree 插件来源的搜索、排行榜和播放集中在一个应用里，同时提供收藏、自建歌单、当前播放队列和同步歌词。你可以从榜单或在线歌单发现歌曲，也可以搜索后查看可选来源；喜欢的版本连同播放来源一起保存，下次从收藏直接听。
 
 项目使用 Java 与 Media3，参考 MusicFree 的 JS 插件协议独立实现，没有复制 MusicFree 应用代码，也不是 MusicFree 官方客户端。收藏、歌单和设置保存在本机，无需注册轻听账号。
 
@@ -55,7 +55,7 @@
 | 下载项 | 说明 |
 | --- | --- |
 | [最新版通用 APK](https://github.com/2015Bing/qingting-musicfree/releases/latest/download/qingting-universal.apk) | 推荐，点击直接下载安装包 |
-| [v0.4.1 APK](https://github.com/2015Bing/qingting-musicfree/releases/download/v0.4.1/qingting-0.4.1-universal.apk) | 当前发布版本，固定下载地址 |
+| [v0.5.0 APK](https://github.com/2015Bing/qingting-musicfree/releases/download/v0.5.0/qingting-0.5.0-universal.apk) | 当前发布版本，固定下载地址 |
 | [发布页及校验文件](https://github.com/2015Bing/qingting-musicfree/releases/latest) | 更新说明、SHA-256 校验值和其他产物 |
 
 - 支持 **Android 8.0 及以上**。通用 APK 没有 ABI 限制，无需按手机芯片选择安装包。
@@ -66,10 +66,11 @@
 ## 功能
 
 - **多源搜索**：按歌曲展示来源数量，查看线路状态，手动选源，普通歌曲失败时自动尝试备用线路。
+- **在线歌单搜索**：歌曲／歌单切换，按来源筛选、渐进结果与分页；详情支持播放、收藏、加入队列及搜索已加载歌曲，缓存减少重复等待。
 - **排行榜**：按来源浏览、分页、播放已加载歌曲；刷新检查空榜及失败榜，查看隐藏原因。
 - **播放队列**：下一首播放、添加到队尾、左滑移出；顺序播放、列表循环和单曲循环。
 - **固定来源收藏**：收藏记录选定的来源；失效时提示，由用户手动换源。
-- **自建歌单**：创建、重命名、删除；仅从我的收藏提供单首或批量添加，重复歌曲自动跳过。
+- **自建歌单**：创建、重命名、删除与名称筛选；仅从我的收藏提供单首或批量添加，重复歌曲自动跳过。
 - **本地音乐库**：收藏、最近播放、歌单内搜索与排序；最近 30 条搜索历史。
 - **播放详情**：唱片／歌词切换、歌词跟随和逐句跳转、时间校准、通知栏及锁屏控制。
 - **定时停止**：15／30／60 分钟，或播完当前歌曲停止。
@@ -176,11 +177,11 @@ adb reverse tcp:18765 tcp:18765
 
 设备测试会添加测试来源与音乐库数据，请使用专用测试环境。合成音频服务不含商业音乐。
 
-当前已有 109 项 Java 回归测试通过，正式版构建、Lint 与 APK 签名检查通过。最新列表复用、图片请求和导航设备用例已编译，尚未完成真机帧率及全流程验收；自动测试通过不代表所有设备、插件和网络环境都不卡顿。
+Java 回归测试覆盖队列、缓存、固定来源、歌单搜索与分页取消等行为，正式版构建、Lint 与 APK 签名检查通过。列表复用、图片请求、歌单搜索和导航设备用例已编译，尚未完成真机帧率及全流程验收；自动测试通过不代表所有设备、插件和网络环境都不卡顿。
 
 ## 插件兼容范围
 
-支持 `module.exports`、异步 `search`、`getMediaSource`、`getLyric`、`getTopLists`、`getTopListDetail`、HTTP 请求头及 `env.getUserVariables()`，保留歌曲的原始插件字段；接受 `{plugins:[{name,url,version}]}` 订阅清单。
+支持 `module.exports`、异步 `search`、`getMediaSource`、`getLyric`、`getTopLists`、`getTopListDetail`、歌单搜索类型 `sheet`、`getMusicSheetInfo`、HTTP 请求头及 `env.getUserVariables()`，保留歌曲的原始插件字段；接受 `{plugins:[{name,url,version}]}` 订阅清单。
 
 运行时内置 axios、crypto-js、dayjs、big-integer、qs、he、cheerio。当前不支持 Node 原生模块、`require('webdav')`、依赖浏览器 fetch/XHR 的插件或自动 Cookie 会话。不承诺兼容所有 MusicFree 插件。
 

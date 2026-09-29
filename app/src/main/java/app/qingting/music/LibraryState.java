@@ -5,6 +5,7 @@ public final class LibraryState {
  public static final String[] SORTS={"默认顺序","添加时间 · 最新","添加时间 · 最早","歌名","歌手"};
  public final List<Song> favorites=new ArrayList<>();public final List<Playlist> playlists=new ArrayList<>();public final List<String> history=new ArrayList<>();
  public static final class Playlist {public String id,name;public long createdAt;public final List<Song> songs=new ArrayList<>();}
+ public List<Playlist> filteredPlaylists(String query){String q=query.trim().toLowerCase(Locale.ROOT);List<Playlist> result=new ArrayList<>();for(Playlist p:playlists)if(p.name.toLowerCase(Locale.ROOT).contains(q))result.add(p);return result;}
  public Playlist playlist(String id){for(Playlist p:playlists)if(p.id.equals(id))return p;return null;}
  private String name(String value,String except){String n=value.trim();if(n.isEmpty()||n.length()>60)throw new IllegalArgumentException("歌单名称需为 1–60 个字符");for(Playlist p:playlists)if(!p.id.equals(except)&&p.name.equalsIgnoreCase(n))throw new IllegalArgumentException("已有同名歌单");return n;}
  public Playlist create(String value){Playlist p=new Playlist();p.name=name(value,"");p.id=UUID.randomUUID().toString();p.createdAt=System.currentTimeMillis();playlists.add(p);return p;}

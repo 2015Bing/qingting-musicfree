@@ -33,7 +33,7 @@ globalThis.__invoke = async (id, source, variables, method, args) => {
     }
     let value;
     if (method==='metadata') value={platform:plugin.platform,version:plugin.version || '0.0.0',
-      userVariables:plugin.userVariables || [],search:typeof plugin.search==='function',getLyric:typeof plugin.getLyric==='function',topLists:typeof plugin.getTopLists==='function'&&typeof plugin.getTopListDetail==='function',supportedSearchType:plugin.supportedSearchType || ['music']};
+      userVariables:plugin.userVariables || [],search:typeof plugin.search==='function',getLyric:typeof plugin.getLyric==='function',sheets:typeof plugin.search==='function'&&typeof plugin.getMusicSheetInfo==='function'&&(!plugin.supportedSearchType||plugin.supportedSearchType.includes('sheet')),primaryKey:plugin.primaryKey||['id'],topLists:typeof plugin.getTopLists==='function'&&typeof plugin.getTopListDetail==='function',supportedSearchType:plugin.supportedSearchType || ['music']};
     else if(method==='getMediaSource' && typeof plugin[method]!=='function') value={url:args[0].url};
     else if(method==='getLyric' && typeof plugin[method]!=='function') value=args[0]?.rawLrc?{rawLrc:args[0].rawLrc,translation:args[0].translation}:null;
     else {

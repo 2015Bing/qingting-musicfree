@@ -28637,6 +28637,8 @@
             userVariables: plugin.userVariables || [],
             search: typeof plugin.search === "function",
             getLyric: typeof plugin.getLyric === "function",
+            sheets: typeof plugin.search === "function" && typeof plugin.getMusicSheetInfo === "function" && (!plugin.supportedSearchType || plugin.supportedSearchType.includes("sheet")),
+            primaryKey: plugin.primaryKey || ["id"],
             topLists: typeof plugin.getTopLists === "function" && typeof plugin.getTopListDetail === "function",
             supportedSearchType: plugin.supportedSearchType || ["music"]
           };

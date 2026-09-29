@@ -79,3 +79,12 @@ test('lyric API preserves original song keys, text and translation',async()=>{
 test('plugins without lyrics return null instead of an unsupported-method error',async()=>{
   assert.equal(await runtime(`module.exports={platform:'No lyrics'}`).call('getLyric',[{}]),null);
 });
+test('sheet search capabilities follow declarations and require detail support',async()=>{
+  const methods="search(q,p,t){return {data:[{id:7,title:q,token:'keep',type:t}],isEnd:p>=2}},getMusicSheetInfo(s,p){return {musicList:[{id:p,title:s.title,token:s.token}],sheetItem:{cursor:'next'},isEnd:p>=2}}";
+  const r=runtime(`module.exports={platform:'Sheets',${methods}}`);
+  assert.equal((await r.call('metadata')).sheets,true);
+  const sheet=(await r.call('search',['通勤',1,'sheet'])).data[0];assert.equal(sheet.type,'sheet');
+  assert.equal((await r.call('getMusicSheetInfo',[sheet,2])).musicList[0].token,'keep');
+  assert.equal((await runtime(`module.exports={platform:'No',supportedSearchType:['music'],${methods}}`).call('metadata')).sheets,false);
+  assert.equal((await runtime(`module.exports={platform:'No',supportedSearchType:['sheet'],search(){}}`).call('metadata')).sheets,false);
+});

@@ -16,6 +16,7 @@ public final class MusicRepository {
         "https://gitee.com/kevinr/tvbox/raw/master/musicfree/plugins.json"));
     public interface Listener {void changed();}
     public interface Result<T> {void finish(T value,String error);}
+    public final OnlineSheets sheets;
     public final Charts charts=new Charts();public final DailyCharts dailyCharts;private volatile int catalogGeneration;private int catalogPending;
     private ChartFilter chartFilter=new ChartFilter();public boolean filteringCharts;public String chartFilterStatus="";private int filterTotal,filterChecked,filterEmpty,filterUnknown,filterSelection,filterCatalogFailed,filterFailed;private JSONObject refreshedSelectionPage;private String refreshedSelectionKey="";private int refreshedSelectionPageNumber=1;
     private final ScheduledExecutorService chartCacheWork=Executors.newSingleThreadScheduledExecutor();private ScheduledFuture<?> chartArchiveWrite;private ChartArchive chartArchive=new ChartArchive();private LocalFileCache chartDisk;private boolean restoringChartCache=true;private int chartCacheEpoch;
@@ -55,6 +56,7 @@ public final class MusicRepository {
         if(saved!=null)try{JSONObject stored=new JSONObject(saved);if(stored.optInt("version")!=1||stored.optJSONArray("favorites")==null||stored.optJSONArray("playlists")==null)throw new JSONException("不支持或损坏的音乐库");library=LibraryState.from(stored);favorites.clear();favorites.addAll(library.favorites);}catch(Exception e){libraryReadOnly=true;library.favorites.addAll(favorites);notice="音乐库读取失败，已保留原数据并暂停写入";}
         else{try{library=LibraryState.migrateLegacy(LibraryState.songsJson(favorites));favorites.clear();favorites.addAll(library.favorites);saved=library.json().toString();if(!prefs.edit().putString("libraryV2",saved).commit())notice="旧收藏迁移未保存，请检查存储空间";}catch(Exception e){libraryReadOnly=true;notice="旧收藏迁移失败，原数据已保留";}}
         libraryTransactions=new LibraryTransactions(saved==null?"{\"version\":1,\"favorites\":[],\"playlists\":[],\"history\":[]}":saved,Executors.newSingleThreadExecutor(),r->main.post(r),json->prefs.edit().putString("libraryV2",json).commit());
+        sheets=new OnlineSheets(()->sources,(source,method,args,valid)->runtime.invoke(source,method,args,valid),Executors.newFixedThreadPool(2),Executors.newSingleThreadExecutor(),r->main.post(r),new LocalFileCache(new java.io.File(context.getCacheDir(),"sheets"),8L*1024*1024,1800000),this::changed);
         dailyCharts=new DailyCharts(context,this);
         chartDisk=new LocalFileCache(new java.io.File(context.getCacheDir(),"charts"),8L*1024*1024,1800000);restoreChartArchive();
     }
@@ -111,7 +113,7 @@ public final class MusicRepository {
                         for(int k=0;k<old.length();k++){JSONObject o=old.getJSONObject(k);if(pluginUrl.equals(o.optString("url")))s.variables=Source.from(o).variables;}
                         JSONObject meta=(JSONObject)runtime.invoke(s,"metadata",new JSONArray());
                         String types=meta.getJSONArray("supportedSearchType").toString();s.music=meta.optBoolean("search")&&types.contains("\"music\"");s.lyricSearch=meta.optBoolean("search")&&types.contains("\"lyric\"");
-                        s.topLists=meta.optBoolean("topLists");if(!s.music&&!s.lyricSearch&&!s.topLists)throw new Exception("没有歌曲、歌词或排行榜能力");
+                        s.topLists=meta.optBoolean("topLists");if(!s.music&&!s.lyricSearch&&!s.topLists&&!meta.optBoolean("sheets"))throw new Exception("没有歌曲、歌单、歌词或排行榜能力");
                         s.name=meta.getString("platform");s.version=meta.optString("version");s.fields=meta.optJSONArray("userVariables");if(s.fields==null)s.fields=new JSONArray();
                         s.message="插件就绪 · 尚未搜索";imported.add(s);knownUrls.add(pluginUrl);
                         int count=i+1;main.post(()->{notice="正在检查插件 "+count+" / "+entries.length();changed();});
@@ -230,6 +232,7 @@ public final class MusicRepository {
         work.execute(()->{String error=null;try{Object result=runtime.invoke(s,"search",new JSONArray().put(query.isEmpty()?"音乐":query).put(1).put("music"));if(!(result instanceof JSONObject)||((JSONObject)result).optJSONArray("data")==null)throw new Exception("搜索返回结构不兼容");}catch(Exception e){error=e.getMessage();}
             String err=error;main.post(()->{if(err==null)success(s,"搜索正常 · 播放需逐曲检测",start);else failure(s,err);save();});});
     }
+    public void pauseSearch(){generation++;pending=0;searching=false;cancelResultScan();}
     public void search(String input){String q=input.trim();if(q.isEmpty()){generation++;cancelVisibleChecks();cancelResultScan();query="";results.clear();searchStates.clear();searching=false;changed();return;}cancelVisibleChecks();autoAttempted.clear();cancelResultScan();resultScanStatus="";onlyPlayable=false;generation++;editLibrary(l->l.remember(q));query=q;results.clear();pages.clear();ended.clear();searchStates.clear();pending=0;searching=false;loadMore();}
     public boolean hasMore(){for(Source s:sources)if(s.music&&s.enabled&&!s.hidden()&&!ended.contains(s.id))return true;return false;}
     public void loadMore(){
